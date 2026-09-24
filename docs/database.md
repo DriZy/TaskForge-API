@@ -118,6 +118,27 @@ docker compose exec api npx prisma migrate dev   # apply latest as the CLI write
 
 `db:migrate`, `db:generate`, `db:studio` scripts are in `package.json`.
 
+### Test database
+
+The integration suite runs against an **isolated** `taskforge_test` database
+(created by `docker/postgres-init/` on first Postgres boot), never the
+dev/production `taskforge` database. Jest enforces this:
+
+- `tests/test-env.ts` (setupFiles) pins `DATABASE_URL`/`TEST_DATABASE_URL` to a
+  `*_test` database **before** any app module may load `.env` — without it, the
+  app repositories' bare `PrismaClient()` would resolve to the dev database.
+- `tests/global-setup.ts` runs `prisma migrate deploy` on the test database
+  before the suite, keeping its schema in lockstep automatically.
+- A startup guard refuses to run if `TEST_DATABASE_URL` does not target a
+  `*_test` database.
+
+Run migrations against the test database explicitly, if ever needed:
+
+```bash
+DATABASE_URL=postgresql://taskforge:taskforge@127.0.0.1:5432/taskforge_test?schema=public \
+  npx prisma migrate deploy
+```
+
 ---
 
 ## 7. Environment / Connection
@@ -126,7 +147,8 @@ docker compose exec api npx prisma migrate dev   # apply latest as the CLI write
 - Inside compose, the API uses the in-network URL (`postgres:5432`); the host CLI uses
   `127.0.0.1:5432` (compose publishes it).
 - No connection-string is committed; `.env.example` has placeholders only.
-- The test suite uses a separate isolated database (see `docs/testing.md`), never production.
+- The test suite uses a separate isolated `taskforge_test` database (see the Test database
+  section in this file), never production.
 
 ---
 
