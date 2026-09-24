@@ -221,6 +221,40 @@ Rules:
 
 ---
 
+## Nullable Field Contract
+
+Single source of truth for how `description` and `dueDate` behave across
+create/update/response.
+
+**Create** (`POST /api/tasks`):
+
+| Request                | Result            |
+| ---------------------- | ----------------- |
+| Field omitted          | Store `null`      |
+| Explicit `null`        | Store `null`      |
+| Valid value / `""`     | Store value       |
+| Invalid value          | `400`             |
+
+**Update** (`PATCH /api/tasks/:id`):
+
+| Request                | Result                       |
+| ---------------------- | ---------------------------- |
+| Field omitted          | Preserve existing value      |
+| Explicit `null`        | Clear value (set `null`)     |
+| Valid value / `""`     | Replace value                |
+| Invalid value          | `400`                        |
+
+**Non-nullable:** `title` and `status` cannot be set to `null` on create or
+update → `400 VALIDATION_ERROR`.
+
+**Empty string vs null:** `""` is an empty description and is distinct from
+`null` (no description). Empty descriptions are never normalized to `null`.
+
+**Responses:** `description` and `dueDate` are always present in single-task and
+list responses — `null` when unset. They must never disappear from a payload.
+
+---
+
 ## HTTP Status Codes
 
 ```text
