@@ -1,0 +1,41 @@
+// TaskForge-API — Prisma schema
+// Docs: docs/database.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Task lifecycle status. Enums can't hold hyphens, so in-progress is stored as
+/// `in_progress`; the API's hyphenated form (`in-progress`) is a display/contract
+/// detail mapped by the schema layer.
+enum TaskStatus {
+  todo
+  in_progress
+  done
+}
+
+/// A task managed by TaskForge-API.
+model Task {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus   @default(todo)
+  dueDate     DateTime?    @db.Timestamptz(6)
+  createdAt   DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(6)
+
+  // Indexes justified by expected queries (filtering + sorting + pagination).
+  // See docs/database.md for full rationale.
+  @@index([status])
+  @@index([dueDate])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([status, dueDate])
+
+  @@map("tasks")
+}
