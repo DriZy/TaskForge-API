@@ -15,6 +15,24 @@ const statusDbToApi: Record<TaskStatus, "todo" | "in-progress" | "done"> = {
 
 export type TaskStatusApi = keyof typeof statusApiToDb;
 
+type TaskRow = Awaited<ReturnType<typeof taskRepository.create>>;
+
+function serialize(task: TaskRow) {
+  return {
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    status: statusDbToApi[task.status],
+    dueDate: task.dueDate ? task.dueDate.toISOString() : null,
+    ownerId: task.ownerId,
+    owner: task.owner,
+    isShared: task.isShared,
+    version: task.version,
+    createdAt: task.createdAt.toISOString(),
+    updatedAt: task.updatedAt.toISOString(),
+  };
+}
+
 export interface CreateTaskParams {
   title: string;
   description?: string | null;
@@ -23,6 +41,8 @@ export interface CreateTaskParams {
   isShared?: boolean;
   ownerId: string;
 }
+
+export type TaskList = "private" | "shared";
 
 export const taskService = {
   async create(params: CreateTaskParams) {
@@ -39,18 +59,19 @@ export const taskService = {
       isShared: params.isShared ?? false,
     });
 
-    return {
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      status: statusDbToApi[task.status],
-      dueDate: task.dueDate ? task.dueDate.toISOString() : null,
-      ownerId: task.ownerId,
-      owner: task.owner,
-      isShared: task.isShared,
-      version: task.version,
-      createdAt: task.createdAt.toISOString(),
-      updatedAt: task.updatedAt.toISOString(),
-    };
+    return serialize(task);
+  },
+
+  async list({ list, ownerId }: { list: TaskList; ownerId: string }) {
+    const rows = list === "shared"
+      ? await taskRepository.findShared()
+      : await taskRepository.findPrivate({ ownerId });
+
+    return rows.map(serialize);
+  },
+
+  async getById({ id, ownerId }: { id: string; ownerId: string }) {
+    const task = await taskRepository.findVisible({ id, ownerId });
+    return task ? serialize(task) : null;
   },
 };

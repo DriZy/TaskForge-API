@@ -60,6 +60,15 @@ Private list   → tasks where isShared = false AND ownerId = current user
 Shared list    → tasks where isShared = true (visible to all authenticated users)
 ```
 
+The client selects the list with the `list` query parameter on `GET /api/tasks`:
+
+```http
+GET /api/tasks            # private list (default)
+GET /api/tasks?list=shared
+```
+
+Invalid `list` values are rejected with `400 VALIDATION_ERROR`.
+
 Rules:
 
 * A client only reads/writes tasks it can see.
