@@ -20,15 +20,15 @@ PostgreSQL is required. Schema changes are managed exclusively through Prisma mi
 
 ## 2. Task Model
 
-| Field         | Type                                   | Nullable | Default         | Notes                                        |
-| ------------- | -------------------------------------- | -------- | --------------- | -------------------------------------------- |
-| `id`          | UUID (string)                          | No       | `uuid()`        | Primary key. Client-side generated UUID.     |
-| `title`       | String                                 | No       | —               | Free text; ≥1 char, validated by the API.    |
-| `description` | String                                 | Yes      | `null`          | Nullable by contract.                        |
-| `status`      | `enum TaskStatus`                      | No       | `todo`          | One of `todo`/`in_progress`/`done`.          |
-| `dueDate`     | Timestamp with time zone               | Yes      | `null`          | Nullable by contract. Stored as timestamptz. |
-| `createdAt`   | Timestamp with time zone               | No       | `CURRENT_TIMESTAMP` | Managed by Prisma.                      |
-| `updatedAt`   | Timestamp with time zone               | No       | —               | Auto-updated by Prisma on every write.       |
+| Field         | Type                     | Nullable | Default             | Notes                                        |
+| ------------- | ------------------------ | -------- | ------------------- | -------------------------------------------- |
+| `id`          | UUID (string)            | No       | `uuid()`            | Primary key. Client-side generated UUID.     |
+| `title`       | String                   | No       | —                   | Free text; ≥1 char, validated by the API.    |
+| `description` | String                   | Yes      | `null`              | Nullable by contract.                        |
+| `status`      | `enum TaskStatus`        | No       | `todo`              | One of `todo`/`in_progress`/`done`.          |
+| `dueDate`     | Timestamp with time zone | Yes      | `null`              | Nullable by contract. Stored as timestamptz. |
+| `createdAt`   | Timestamp with time zone | No       | `CURRENT_TIMESTAMP` | Managed by Prisma.                           |
+| `updatedAt`   | Timestamp with time zone | No       | —                   | Auto-updated by Prisma on every write.       |
 
 UTC is used consistently: `createdAt`, `updatedAt` and `dueDate` are stored with time zone
 (`timestamptz`) and Prisma returns them as UTC instants.
@@ -73,15 +73,16 @@ enforced by the `TaskStatus` enum, so a raw SQL insert with an unknown status is
 
 Indexes were chosen to **match the exact query shapes** the API exposes, not added speculatively.
 
-| Query (API)                       | Supporting index                      | Why                                       |
-| --------------------------------- | ------------------------------------- | ----------------------------------------- |
-| Filter by `status`                | `(status)`                            | `WHERE status = $1`                       |
-| Sort by `dueDate`                 | `(dueDate)`                           | `ORDER BY dueDate`                        |
-| Default sort `createdAt` desc     | `(createdAt)`                         | `ORDER BY createdAt DESC`                 |
-| Filter `status` + sort `createdAt`| `(status, createdAt)`                 | Composite filter+sort (combined query)    |
-| Filter `status` + sort `dueDate`  | `(status, dueDate)`                   | Composite filter+sort (combined query)    |
+| Query (API)                        | Supporting index      | Why                                    |
+| ---------------------------------- | --------------------- | -------------------------------------- |
+| Filter by `status`                 | `(status)`            | `WHERE status = $1`                    |
+| Sort by `dueDate`                  | `(dueDate)`           | `ORDER BY dueDate`                     |
+| Default sort `createdAt` desc      | `(createdAt)`         | `ORDER BY createdAt DESC`              |
+| Filter `status` + sort `createdAt` | `(status, createdAt)` | Composite filter+sort (combined query) |
+| Filter `status` + sort `dueDate`   | `(status, dueDate)`   | Composite filter+sort (combined query) |
 
 Rationale:
+
 - The two composite indexes cover the **combined filter + sort** path, which is the most common
   read workload after plain CRUD.
 - Single-column indexes remain cheap for standalone `status`/`dueDate`/`createdAt` filters.
@@ -102,7 +103,7 @@ prisma generate      → regenerate the typed Prisma Client
 ```
 
 - Every schema change gets **one migration** under `prisma/migrations/` via `prisma migrate dev
-  --name <name>`, in TDD order (tests first).
+--name <name>`, in TDD order (tests first).
 - Migrations are committed to the repository. Production applies them with `migrate deploy`
   (never `migrate dev`).
 - Reverse migrations are not automatic; a corrective forward migration is the standard rollback
