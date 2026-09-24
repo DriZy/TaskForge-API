@@ -15,6 +15,24 @@ const statusDbToApi: Record<TaskStatus, "todo" | "in-progress" | "done"> = {
 
 export type TaskStatusApi = keyof typeof statusApiToDb;
 
+export type TaskSortBy = "createdAt" | "updatedAt" | "dueDate" | "title" | "status";
+export type TaskSortOrder = "asc" | "desc";
+
+const taskSortAllowlist: Record<TaskSortBy, "createdAt" | "updatedAt" | "dueDate" | "title" | "status"> = {
+  createdAt: "createdAt",
+  updatedAt: "updatedAt",
+  dueDate: "dueDate",
+  title: "title",
+  status: "status",
+};
+
+function sortOrderBy(sortBy: TaskSortBy, sortOrder: TaskSortOrder) {
+  const field = taskSortAllowlist[sortBy];
+  if (!field) return undefined;
+  if (field === "dueDate") return { dueDate: { sort: sortOrder, nulls: "last" } };
+  return { [field]: sortOrder };
+}
+
 type TaskRow = Awaited<ReturnType<typeof taskRepository.create>>;
 
 function serialize(task: TaskRow) {
@@ -50,6 +68,8 @@ export interface TaskListParams {
   status?: "todo" | "in-progress" | "done";
   page?: number;
   limit?: number;
+  sortBy?: TaskSortBy;
+  sortOrder?: TaskSortOrder;
 }
 
 export interface TaskListResult {
@@ -75,15 +95,24 @@ export const taskService = {
     return serialize(task);
   },
 
-  async list({ list, ownerId, status, page = 1, limit = 20 }: TaskListParams): Promise<TaskListResult> {
+  async list({
+    list,
+    ownerId,
+    status,
+    page = 1,
+    limit = 20,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  }: TaskListParams): Promise<TaskListResult> {
     const dbStatus: TaskStatus | undefined = status ? statusApiToDb[status] : undefined;
     const skip = (page - 1) * limit;
+    const orderBy = sortOrderBy(sortBy, sortOrder) ?? { createdAt: "desc" };
 
     const isShared = list === "shared";
     const [rows, total] = await Promise.all([
       isShared
-        ? taskRepository.findShared({ status: dbStatus, skip, take: limit })
-        : taskRepository.findPrivate({ ownerId, status: dbStatus, skip, take: limit }),
+        ? taskRepository.findShared({ status: dbStatus, skip, take: limit, orderBy })
+        : taskRepository.findPrivate({ ownerId, status: dbStatus, skip, take: limit, orderBy }),
       isShared
         ? taskRepository.countShared({ status: dbStatus })
         : taskRepository.countPrivate({ ownerId, status: dbStatus }),

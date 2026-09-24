@@ -2,9 +2,15 @@ import { z } from "zod";
 
 export const taskStatusQuery = z.enum(["todo", "in-progress", "done"]);
 
+export const taskSortByQuery = z.enum(["createdAt", "updatedAt", "dueDate", "title", "status"]);
+
+export const taskSortOrderQuery = z.enum(["asc", "desc"]);
+
 export const taskListQuerySchema = z.object({
   list: z.enum(["private", "shared"]).optional(),
   status: taskStatusQuery.optional(),
+  sortBy: taskSortByQuery.default("createdAt"),
+  sortOrder: taskSortOrderQuery.default("desc"),
   page: z.coerce.number().int().min(1, "page must be at least 1").default(1),
   limit: z.coerce
     .number()

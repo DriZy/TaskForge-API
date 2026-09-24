@@ -111,6 +111,26 @@ GET /api/tasks?page=2&limit=10
 filter), `totalPages` is `ceil(total / limit)` (at least 1), and an
 out-of-range page returns an empty `data` array with the requested `page`.
 
+`GET /api/tasks` supports server-side sorting via `sortBy` and `sortOrder`:
+
+```http
+GET /api/tasks?sortBy=dueDate&sortOrder=asc
+```
+
+* Allowed `sortBy` values (allowlisted at server level): `createdAt`,
+  `updatedAt`, `dueDate`, `title`, `status`. Anything else →
+  `400 VALIDATION_ERROR`. The value is mapped through an explicit allowlist —
+  arbitrary input is never used as a database field.
+* Allowed `sortOrder` values: `asc`, `desc`. Anything else →
+  `400 VALIDATION_ERROR`.
+* Defaults: `sortBy=createdAt`, `sortOrder=desc`.
+* `status` sorts in database enum order (`todo` < `in-progress` < `done`);
+  `dueDate` sorts with null due dates last in both directions; `title` sorts
+  alphabetically; `createdAt`/`updatedAt` chronologically.
+
+The parameters combine: `list`, `status`, `sortBy`, `sortOrder`, `page`,
+`limit` all work together on one request (see Sorting/Pagination sections).
+
 Rules:
 
 * A client only reads/writes tasks it can see.

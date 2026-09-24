@@ -45,16 +45,19 @@ export const taskRepository = {
     status,
     skip = 0,
     take = 20,
+    orderBy,
   }: {
     ownerId: string;
     status?: TaskStatus;
     skip?: number;
     take?: number;
+    orderBy?: Record<string, unknown>;
   }) {
     return prisma.task.findMany({
       where: { ownerId, isShared: false, ...(status ? { status } : {}) },
       skip,
       take,
+      orderBy,
       select: taskSelect,
     });
   },
@@ -69,15 +72,18 @@ export const taskRepository = {
     status,
     skip = 0,
     take = 20,
+    orderBy,
   }: {
     status?: TaskStatus;
     skip?: number;
     take?: number;
+    orderBy?: Record<string, unknown>;
   }) {
     return prisma.task.findMany({
       where: { isShared: true, ...(status ? { status } : {}) },
       skip,
       take,
+      orderBy,
       select: taskSelect,
     });
   },

@@ -42,6 +42,8 @@ export const listTasksHandler: RequestHandler = async (req, res, next) => {
       ownerId: req.user!.id,
       page: query.page,
       limit: query.limit,
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
     });
 
     res.status(200).json({
