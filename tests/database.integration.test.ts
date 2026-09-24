@@ -1,7 +1,9 @@
 import { PrismaClient, TaskStatus } from "@prisma/client";
+import { createApp } from "../src/app";
+import request from "supertest";
 
 const TEST_DATABASE_URL =
-  process.env.DATABASE_URL ??
+  process.env.TEST_DATABASE_URL ??
   "postgresql://taskforge:taskforge@127.0.0.1:5432/taskforge_test?schema=public";
 
 describe("database — Task model contract", () => {
@@ -23,6 +25,30 @@ describe("database — Task model contract", () => {
     await prisma.token.deleteMany();
     await prisma.user.deleteMany();
     await prisma.$disconnect();
+  });
+
+  it("runs every client (including the app's repositories) against an isolated *_test database", async () => {
+    const dbOf = async (client: PrismaClient): Promise<string> => {
+      const rows = await client.$queryRaw<{ db: string }[]>`SELECT current_database() AS db`;
+      return rows[0].db;
+    };
+
+    const direct = await dbOf(prisma);
+    expect(direct.endsWith("_test")).toBe(true);
+
+    const email = `iso-${Date.now()}@example.com`;
+    const app = createApp();
+    const res = await request(app)
+      .post("/api/auth/register")
+      .send({ email, password: "correct-horse-battery" });
+    expect(res.status).toBe(201);
+
+    const found = await prisma.user.findUnique({ where: { email } });
+    expect(found).not.toBeNull();
+
+    await prisma.user.deleteMany({ where: { email } });
+    await prisma.token.deleteMany();
+    await prisma.task.deleteMany();
   });
 
   it("persists and retrieves a Task with all required fields", async () => {
