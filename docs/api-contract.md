@@ -131,6 +131,36 @@ GET /api/tasks?sortBy=dueDate&sortOrder=asc
 The parameters combine: `list`, `status`, `sortBy`, `sortOrder`, `page`,
 `limit` all work together on one request (see Sorting/Pagination sections).
 
+## Combined Query Processing Order
+
+One request may combine every query capability. Processing order is fixed:
+
+```text
+Validate
+    ↓
+Filter (list + status)
+    ↓
+Sort (sortBy + sortOrder)
+    ↓
+Count (total after filter)
+    ↓
+Paginate (skip/take from page + limit)
+    ↓
+Respond (data + pagination metadata)
+```
+
+The equivalent SQL shape is:
+
+```sql
+WHERE isShared = ... AND status = ...
+ORDER BY ... ASC|DESC
+LIMIT <limit> OFFSET <(page-1) * limit>
+```
+
+`total` and `totalPages` always reflect the filtered dataset; pagination does
+not affect them. Sorting by `dueDate` uses distinct fixture dates to keep
+combined queries deterministic.
+
 Rules:
 
 * A client only reads/writes tasks it can see.
