@@ -1,5 +1,5 @@
 // TaskForge-API — Prisma schema
-// Docs: docs/database.md
+// Docs: docs/database.md, docs/api-contract.md
 
 generator client {
   provider = "prisma-client-js"
@@ -19,23 +19,64 @@ enum TaskStatus {
   done
 }
 
+/// A registered client of the API. Identity is established via an opaque,
+/// server-side-hashed API token (see Token), never via client-supplied claims.
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(254)
+  passwordHash String   @db.VarChar(255)
+  tasks        Task[]
+  tokens       Token[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("users")
+}
+
+/// An opaque API token issued at registration/login. The token value handed to
+/// the client is a random unguessable string; only its hash is stored here so a
+/// leaked database cannot be replayed. Token value = 32 random bytes (no JWT).
+model Token {
+  id        String   @id @default(uuid()) @db.Uuid
+  tokenHash String   @unique @db.VarChar(64)
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([userId])
+
+  @@map("tokens")
+}
+
 /// A task managed by TaskForge-API.
+/// Visibility is governed by `isShared` and `ownerId`:
+///   - isShared = false → private task on the owner's list
+///   - isShared = true  → shared task on the shared list
+/// `version` enables optimistic concurrency for cooperative edits.
 model Task {
-  id          String       @id @default(uuid())
-  title       String
-  description String?
-  status      TaskStatus   @default(todo)
-  dueDate     DateTime?    @db.Timestamptz(6)
-  createdAt   DateTime     @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime     @updatedAt @db.Timestamptz(6)
+  id          String    @id @default(uuid()) @db.Uuid
+  title       String    @db.VarChar(255)
+  description String?   @db.Text
+  status      TaskStatus @default(todo)
+  dueDate     DateTime? @db.Timestamptz(6)
+  ownerId     String    @db.Uuid
+  owner       User      @relation(fields: [ownerId], references: [id])
+  isShared    Boolean   @default(false)
+  version     Int       @default(1)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(6)
 
   // Indexes justified by expected queries (filtering + sorting + pagination).
-  // See docs/database.md for full rationale.
-  @@index([status])
-  @@index([dueDate])
-  @@index([createdAt])
-  @@index([status, createdAt])
-  @@index([status, dueDate])
+  // Queries are always scoped by owner and/or the shared-list flag, so indexes
+  // lead with `ownerId` or `isShared`. See docs/database.md for rationale.
+  @@index([ownerId, isShared])
+  @@index([ownerId, status])
+  @@index([ownerId, createdAt])
+  @@index([ownerId, dueDate])
+  @@index([isShared, status])
+  @@index([isShared, createdAt])
 
   @@map("tasks")
 }

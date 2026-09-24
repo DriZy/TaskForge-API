@@ -37,17 +37,14 @@ describe("Express application skeleton", () => {
       });
     });
 
-    it("does not leak the caller to a nonexistent task route", async () => {
+    // Phase 6.5: /api/tasks is gated by requireAuth. An unauthenticated caller
+    // gets 401 (never a 404 that would reveal which task routes exist).
+    it("rejects an unauthenticated caller to a task route with 401", async () => {
       const res = await request(app).get("/api/tasks/not-a-task");
 
-      expect(res.status).toBe(404);
-      expect(res.body).toEqual({
-        success: false,
-        error: {
-          code: "NOT_FOUND",
-          message: "Route not found",
-        },
-      });
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe("UNAUTHORIZED");
     });
   });
 
