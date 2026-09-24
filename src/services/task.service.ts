@@ -118,4 +118,9 @@ export const taskService = {
     if (result.outcome === "conflict") return { outcome: "conflict" as const };
     return { outcome: "updated" as const, task: serialize(result.task) };
   },
+
+  async remove({ id, ownerId }: { id: string; ownerId: string }) {
+    const result = await taskRepository.deleteScoped({ id, ownerId });
+    return result.deleted;
+  },
 };

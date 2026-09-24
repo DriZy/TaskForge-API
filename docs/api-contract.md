@@ -221,6 +221,21 @@ Rules:
 
 ---
 
+## Delete Task — `DELETE /api/tasks/:id`
+
+Deletes a task the caller can see (same owner/visibility scope as read/update).
+
+Rules:
+
+* Success → `204 No Content`, no body.
+* A task the caller cannot see — another client's private task, or a
+  nonexistent task — → `404 NOT_FOUND` (no existence leak).
+* Shared tasks are deletable by any authenticated client.
+* Invalid `id` → `400 VALIDATION_ERROR`; unauthenticated → `401`.
+* A deleted task is no longer retrievable (`404`).
+
+---
+
 ## Nullable Field Contract
 
 Single source of truth for how `description` and `dueDate` behave across

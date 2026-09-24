@@ -109,3 +109,24 @@ export const updateTaskHandler: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
+
+export const deleteTaskHandler: RequestHandler = async (req, res, next) => {
+  try {
+    const { id } = taskIdParamsSchema.parse(req.params);
+    if (!requireUser(req, res)) return;
+
+    const deleted = await taskService.remove({ id, ownerId: req.user!.id });
+
+    if (!deleted) {
+      res.status(404).json({
+        success: false,
+        error: { code: "NOT_FOUND", message: "Task not found" },
+      });
+      return;
+    }
+
+    res.status(204).end();
+  } catch (error) {
+    next(error);
+  }
+};

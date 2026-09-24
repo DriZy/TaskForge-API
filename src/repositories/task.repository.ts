@@ -82,4 +82,14 @@ export const taskRepository = {
     const updated = await prisma.task.findUnique({ where: { id }, select: taskSelect });
     return { outcome: "updated" as const, task: updated! };
   },
+
+  async deleteScoped({ id, ownerId }: { id: string; ownerId: string }) {
+    const result = await prisma.task.deleteMany({
+      where: {
+        id,
+        OR: [{ ownerId, isShared: false }, { isShared: true }],
+      },
+    });
+    return { deleted: result.count === 1 };
+  },
 };
