@@ -33,3 +33,5 @@ prisma/*.db
 skills-lock.json
 tasks.md
 agents.md
+# Prisma generated client (regenerated on install/build; never commit binaries)
+src/generated/
