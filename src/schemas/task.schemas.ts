@@ -27,3 +27,26 @@ export const createTaskSchema = z.object({
 }).strict();
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
+
+export const updateTaskSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, "title must not be empty")
+    .max(255, "title must be at most 255 characters")
+    .optional(),
+  description: z.string().max(10000, "description is too long").nullable().optional(),
+  status: taskStatusApi.optional(),
+  dueDate: z.string().datetime({ offset: true }).nullable().optional(),
+  version: z.number().int().min(1, "version must be a positive integer"),
+});
+
+export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
+
+export const PROTECTED_TASK_FIELDS = [
+  "id",
+  "ownerId",
+  "isShared",
+  "createdAt",
+  "updatedAt",
+] as const;

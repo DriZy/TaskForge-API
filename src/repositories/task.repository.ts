@@ -63,4 +63,23 @@ export const taskRepository = {
       select: taskSelect,
     });
   },
+
+  async updateWithVersion({
+    id,
+    version,
+    data,
+  }: {
+    id: string;
+    version: number;
+    data: { title?: string; description?: string | null; status?: TaskStatus; dueDate?: Date | null };
+  }) {
+    const result = await prisma.task.updateMany({
+      where: { id, version },
+      data: { ...data, version: { increment: 1 } },
+    });
+    if (result.count === 0) return { outcome: "conflict" as const };
+
+    const updated = await prisma.task.findUnique({ where: { id }, select: taskSelect });
+    return { outcome: "updated" as const, task: updated! };
+  },
 };

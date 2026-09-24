@@ -191,6 +191,36 @@ INTERNAL_ERROR
 
 ---
 
+## Update Task — `PATCH /api/tasks/:id`
+
+Performs a **partial update** of a task visible to the caller. The caller must
+resend the `version` it last read; optimistic concurrency rejects stale writes.
+
+Body (all writable fields optional):
+
+```json
+{
+  "title": "New title",
+  "description": "Optional or null",
+  "status": "done",
+  "dueDate": "2026-11-01T12:00:00.000Z",
+  "version": 3
+}
+```
+
+Rules:
+
+* `version` is a **required** concurrency token: missing → `400
+  VALIDATION_ERROR`; stale (drifted since the caller read it) → `409 CONFLICT`.
+* A successful update increments `version` by 1.
+* Protected fields cannot be sent in the body (`id`, `ownerId`, `isShared`,
+  `createdAt`, `updatedAt`) → `403 FORBIDDEN`.
+* Updating a task the caller cannot see (another client's private task) →
+  `404 NOT_FOUND` (no existence leak).
+* Unauthenticated → `401`.
+
+---
+
 ## HTTP Status Codes
 
 ```text

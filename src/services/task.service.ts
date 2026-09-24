@@ -81,4 +81,41 @@ export const taskService = {
     const task = await taskRepository.findVisible({ id, ownerId });
     return task ? serialize(task) : null;
   },
+
+  async update({
+    id,
+    ownerId,
+    version,
+    changes,
+  }: {
+    id: string;
+    ownerId: string;
+    version: number;
+    changes: {
+      title?: string;
+      description?: string | null;
+      status?: "todo" | "in-progress" | "done";
+      dueDate?: string | null;
+    };
+  }) {
+    const existing = await taskRepository.findVisible({ id, ownerId });
+    if (!existing) return { outcome: "not_found" as const };
+
+    const data: {
+      title?: string;
+      description?: string | null;
+      status?: TaskStatus;
+      dueDate?: Date | null;
+    } = {};
+    if (changes.title !== undefined) data.title = changes.title;
+    if (changes.description !== undefined) data.description = changes.description;
+    if (changes.status) data.status = statusApiToDb[changes.status];
+    if (changes.dueDate !== undefined) {
+      data.dueDate = changes.dueDate === null ? null : new Date(changes.dueDate);
+    }
+
+    const result = await taskRepository.updateWithVersion({ id, version, data });
+    if (result.outcome === "conflict") return { outcome: "conflict" as const };
+    return { outcome: "updated" as const, task: serialize(result.task) };
+  },
 };
