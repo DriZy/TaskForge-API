@@ -6,6 +6,14 @@ function isZodError(error: unknown): error is ZodError {
   return error instanceof Error && "issues" in error;
 }
 
+function isEntityTooLarge(error: unknown): error is { type: string; status: number; statusCode: number } {
+  return (
+    error instanceof Error &&
+    "type" in error &&
+    (error as { type?: string }).type === "entity.too.large"
+  );
+}
+
 export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   if (error instanceof AppError) {
     res.status(error.statusCode).json({
@@ -29,6 +37,17 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
           field: issue.path.join("."),
           message: issue.message,
         })),
+      },
+    });
+    return;
+  }
+
+  if (isEntityTooLarge(error)) {
+    res.status(413).json({
+      success: false,
+      error: {
+        code: "REQUEST_TOO_LARGE",
+        message: "Request body exceeds the allowed size",
       },
     });
     return;

@@ -169,6 +169,14 @@ registry.registerPath({
       description: "Email already registered",
       content: { "application/json": { schema: errorEnvelope } },
     },
+    413: {
+      description: "Request body exceeds the 100kb limit",
+      content: { "application/json": { schema: errorEnvelope } },
+    },
+    429: {
+      description: "Auth rate limit exceeded (100 req / 15 min / IP)",
+      content: { "application/json": { schema: errorEnvelope } },
+    },
   },
 });
 
@@ -194,6 +202,10 @@ registry.registerPath({
     },
     401: {
       description: "Invalid credentials",
+      content: { "application/json": { schema: errorEnvelope } },
+    },
+    429: {
+      description: "Auth rate limit exceeded (100 req / 15 min / IP)",
       content: { "application/json": { schema: errorEnvelope } },
     },
   },
