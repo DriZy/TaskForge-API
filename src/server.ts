@@ -1,12 +1,11 @@
-import http from "node:http";
+import { createApp } from "./app";
+import { env } from "./config/env";
 
-const PORT = Number(process.env.PORT ?? 3000);
+const app = createApp();
+const port = env.PORT;
 
-const server = http.createServer((_req, res) => {
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ success: true, data: { status: "ok" } }));
-});
-
-server.listen(PORT, () => {
-  console.log(`[stub] TaskForge API listening on http://0.0.0.0:${PORT}`);
+app.listen(port, () => {
+  console.log(
+    `[server] TaskForge API listening on http://0.0.0.0:${port} (${env.NODE_ENV})`,
+  );
 });
