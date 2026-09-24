@@ -1,4 +1,3 @@
-import type { Express } from "express";
 import type { User } from "@prisma/client";
 
 declare module "express-serve-static-core" {
@@ -6,5 +5,3 @@ declare module "express-serve-static-core" {
     user?: User;
   }
 }
-
-export type AuthenticatedRequest = Express.Request & { user: User };

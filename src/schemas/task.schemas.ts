@@ -2,14 +2,6 @@ import { z } from "zod";
 
 export const taskStatusApi = z.enum(["todo", "in-progress", "done"]);
 
-export const taskStatusDb = {
-  todo: "todo",
-  "in-progress": "in_progress",
-  done: "done",
-} as const;
-
-export type TaskStatusApi = z.infer<typeof taskStatusApi>;
-
 export const createTaskSchema = z.object({
   title: z
     .string()

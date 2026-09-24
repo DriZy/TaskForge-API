@@ -4,22 +4,9 @@ import { createTaskSchema, updateTaskSchema, PROTECTED_TASK_FIELDS } from "../sc
 import { taskListQuerySchema, taskIdParamsSchema } from "../schemas/task-query.schemas";
 import { taskService } from "../services/task.service";
 
-function requireUser(req: Parameters<RequestHandler>[0], res: Parameters<RequestHandler>[1]) {
-  if (!req.user) {
-    res.status(401).json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "Authentication required" },
-    });
-    return false;
-  }
-  return true;
-}
-
 export const createTaskHandler: RequestHandler = async (req, res, next) => {
   try {
     const parsed = createTaskSchema.parse(req.body);
-    if (!requireUser(req, res)) return;
-
     const task = await taskService.create({
       ...parsed,
       ownerId: req.user!.id,
@@ -34,8 +21,6 @@ export const createTaskHandler: RequestHandler = async (req, res, next) => {
 export const listTasksHandler: RequestHandler = async (req, res, next) => {
   try {
     const query = taskListQuerySchema.parse(req.query);
-    if (!requireUser(req, res)) return;
-
     const result = await taskService.list({
       list: query.list ?? "private",
       status: query.status,
@@ -59,8 +44,6 @@ export const listTasksHandler: RequestHandler = async (req, res, next) => {
 export const getTaskHandler: RequestHandler = async (req, res, next) => {
   try {
     const { id } = taskIdParamsSchema.parse(req.params);
-    if (!requireUser(req, res)) return;
-
     const task = await taskService.getById({ id, ownerId: req.user!.id });
 
     if (!task) {
@@ -80,7 +63,6 @@ export const getTaskHandler: RequestHandler = async (req, res, next) => {
 export const updateTaskHandler: RequestHandler = async (req, res, next) => {
   try {
     const { id } = taskIdParamsSchema.parse(req.params);
-    if (!requireUser(req, res)) return;
 
     const protectedHit = PROTECTED_TASK_FIELDS.find((field) => field in req.body);
     if (protectedHit) {
@@ -121,7 +103,6 @@ export const updateTaskHandler: RequestHandler = async (req, res, next) => {
 export const deleteTaskHandler: RequestHandler = async (req, res, next) => {
   try {
     const { id } = taskIdParamsSchema.parse(req.params);
-    if (!requireUser(req, res)) return;
 
     const deleted = await taskService.remove({ id, ownerId: req.user!.id });
 
