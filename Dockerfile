@@ -9,7 +9,7 @@ RUN npm ci
 
 # ---- build ----
 FROM deps AS build
-COPY tsconfig.json ./
+COPY tsconfig.json tsconfig.build.json ./
 COPY prisma ./prisma
 COPY src ./src
 RUN npx prisma generate
