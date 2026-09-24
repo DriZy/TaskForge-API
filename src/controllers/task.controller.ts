@@ -36,13 +36,19 @@ export const listTasksHandler: RequestHandler = async (req, res, next) => {
     const query = taskListQuerySchema.parse(req.query);
     if (!requireUser(req, res)) return;
 
-    const tasks = await taskService.list({
+    const result = await taskService.list({
       list: query.list ?? "private",
       status: query.status,
       ownerId: req.user!.id,
+      page: query.page,
+      limit: query.limit,
     });
 
-    res.status(200).json({ success: true, data: tasks });
+    res.status(200).json({
+      success: true,
+      data: result.tasks,
+      pagination: result.pagination,
+    });
   } catch (error) {
     next(error);
   }

@@ -81,6 +81,36 @@ Allowed status values are `todo`, `in-progress`, `done`. Invalid status values
 are rejected with `400 VALIDATION_ERROR`. Omitting `status` returns all tasks in
 the selected list.
 
+`GET /api/tasks` supports database-level pagination through `page` and `limit`:
+
+```http
+GET /api/tasks?page=2&limit=10
+```
+
+* Defaults: `page = 1`, `limit = 20`.
+* `limit` maximum is `100`; values above it (and invalid/non-integer values, or
+  `page < 1`) are rejected with `400 VALIDATION_ERROR`.
+* Pagination is applied with `skip`/`take` at the database level — the server
+  never loads all records to paginate in JavaScript.
+* Every list response includes a `pagination` object:
+
+```json
+{
+  "success": true,
+  "data": [],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 45,
+    "totalPages": 3
+  }
+}
+```
+
+`total` is the total number of tasks in the selected list (after the `status`
+filter), `totalPages` is `ceil(total / limit)` (at least 1), and an
+out-of-range page returns an empty `data` array with the requested `page`.
+
 Rules:
 
 * A client only reads/writes tasks it can see.

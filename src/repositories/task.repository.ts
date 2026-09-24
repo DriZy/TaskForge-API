@@ -40,17 +40,51 @@ export const taskRepository = {
     });
   },
 
-  async findPrivate({ ownerId, status }: { ownerId: string; status?: TaskStatus }) {
+  async findPrivate({
+    ownerId,
+    status,
+    skip = 0,
+    take = 20,
+  }: {
+    ownerId: string;
+    status?: TaskStatus;
+    skip?: number;
+    take?: number;
+  }) {
     return prisma.task.findMany({
       where: { ownerId, isShared: false, ...(status ? { status } : {}) },
+      skip,
+      take,
       select: taskSelect,
     });
   },
 
-  async findShared({ status }: { status?: TaskStatus }) {
+  async countPrivate({ ownerId, status }: { ownerId: string; status?: TaskStatus }) {
+    return prisma.task.count({
+      where: { ownerId, isShared: false, ...(status ? { status } : {}) },
+    });
+  },
+
+  async findShared({
+    status,
+    skip = 0,
+    take = 20,
+  }: {
+    status?: TaskStatus;
+    skip?: number;
+    take?: number;
+  }) {
     return prisma.task.findMany({
       where: { isShared: true, ...(status ? { status } : {}) },
+      skip,
+      take,
       select: taskSelect,
+    });
+  },
+
+  async countShared({ status }: { status?: TaskStatus }) {
+    return prisma.task.count({
+      where: { isShared: true, ...(status ? { status } : {}) },
     });
   },
 

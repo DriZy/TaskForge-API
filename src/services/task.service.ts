@@ -48,6 +48,13 @@ export interface TaskListParams {
   list: TaskList;
   ownerId: string;
   status?: "todo" | "in-progress" | "done";
+  page?: number;
+  limit?: number;
+}
+
+export interface TaskListResult {
+  tasks: ReturnType<typeof serialize>[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
 export const taskService = {
@@ -68,13 +75,26 @@ export const taskService = {
     return serialize(task);
   },
 
-  async list({ list, ownerId, status }: TaskListParams) {
+  async list({ list, ownerId, status, page = 1, limit = 20 }: TaskListParams): Promise<TaskListResult> {
     const dbStatus: TaskStatus | undefined = status ? statusApiToDb[status] : undefined;
-    const rows = list === "shared"
-      ? await taskRepository.findShared({ status: dbStatus })
-      : await taskRepository.findPrivate({ ownerId, status: dbStatus });
+    const skip = (page - 1) * limit;
 
-    return rows.map(serialize);
+    const isShared = list === "shared";
+    const [rows, total] = await Promise.all([
+      isShared
+        ? taskRepository.findShared({ status: dbStatus, skip, take: limit })
+        : taskRepository.findPrivate({ ownerId, status: dbStatus, skip, take: limit }),
+      isShared
+        ? taskRepository.countShared({ status: dbStatus })
+        : taskRepository.countPrivate({ ownerId, status: dbStatus }),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    return {
+      tasks: rows.map(serialize),
+      pagination: { page, limit, total, totalPages },
+    };
   },
 
   async getById({ id, ownerId }: { id: string; ownerId: string }) {
