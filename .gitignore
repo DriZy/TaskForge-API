@@ -1,0 +1,35 @@
+# --- Node ---
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# --- Environment ---
+.env
+.env.local
+.env.*.local
+
+# --- Logs ---
+*.log
+npm-debug.log*
+
+# --- OS / Editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# --- Prisma ---
+prisma/migrations/dev.db*
+prisma/*.db
+
+# --- Tests ---
+.tmp/
+
+# --- Agent tooling & working docs (not part of the deliverable) ---
+.agents/
+.claude/
+skills-lock.json
+tasks.md
+agents.md

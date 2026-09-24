@@ -1,0 +1,17 @@
+dist/
+coverage/
+node_modules/
+package-lock.json
+.env
+.env.local
+.env.*.local
+prisma/migrations/
+
+# Tooling and assignment files (not part of the deliverable)
+.agents/
+.claude/
+.idea/
+.git/
+tasks.md
+agents.md
+skills-lock.json

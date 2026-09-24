@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+.env.*.local
+.git/
+.gitignore
+.idea/
+.vscode/
+*.md
+*.log
+npm-debug.log*
+prisma/migrations/dev.db*
