@@ -267,6 +267,8 @@ CONFLICT
 INVALID_REQUEST
 DATABASE_ERROR
 INTERNAL_ERROR
+REQUEST_TOO_LARGE
+RATE_LIMITED
 ```
 
 ---
@@ -361,7 +363,27 @@ list responses — `null` when unset. They must never disappear from a payload.
 403  Authenticated but not permitted to act on this task
 404  Resource not found
 409  Version conflict (resource changed by another client)
+413  Request body exceeds the allowed size (100kb)
+429  Auth rate limit exceeded (100 requests / 15 min / IP)
 500  Unexpected server error
+```
+
+## Request Limits & Rate Limiting
+
+The API applies the following protections to all requests:
+
+```text
+JSON body limit:      100kb  → 413 REQUEST_TOO_LARGE on exceed
+Security headers:     Set by helmet() on every response
+```
+
+Auth endpoints (`POST /api/auth/register`, `POST /api/auth/login`) are throttled
+per client IP:
+
+```text
+Window:   15 minutes
+Limit:    100 requests
+Exceed:   429 RATE_LIMITED
 ```
 
 ---
