@@ -69,6 +69,18 @@ GET /api/tasks?list=shared
 
 Invalid `list` values are rejected with `400 VALIDATION_ERROR`.
 
+`GET /api/tasks` also accepts a `status` filter, applied at the database level
+against the selected list:
+
+```http
+GET /api/tasks?status=todo
+GET /api/tasks?list=shared&status=done
+```
+
+Allowed status values are `todo`, `in-progress`, `done`. Invalid status values
+are rejected with `400 VALIDATION_ERROR`. Omitting `status` returns all tasks in
+the selected list.
+
 Rules:
 
 * A client only reads/writes tasks it can see.

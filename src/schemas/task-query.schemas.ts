@@ -1,7 +1,10 @@
 import { z } from "zod";
 
+export const taskStatusQuery = z.enum(["todo", "in-progress", "done"]);
+
 export const taskListQuerySchema = z.object({
   list: z.enum(["private", "shared"]).optional(),
+  status: taskStatusQuery.optional(),
 });
 
 export type TaskListQuery = z.infer<typeof taskListQuerySchema>;

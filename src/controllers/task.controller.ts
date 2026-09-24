@@ -37,6 +37,7 @@ export const listTasksHandler: RequestHandler = async (req, res, next) => {
 
     const tasks = await taskService.list({
       list: query.list ?? "private",
+      status: query.status,
       ownerId: req.user!.id,
     });
 

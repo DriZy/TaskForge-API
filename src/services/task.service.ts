@@ -44,6 +44,12 @@ export interface CreateTaskParams {
 
 export type TaskList = "private" | "shared";
 
+export interface TaskListParams {
+  list: TaskList;
+  ownerId: string;
+  status?: "todo" | "in-progress" | "done";
+}
+
 export const taskService = {
   async create(params: CreateTaskParams) {
     const status: TaskStatus = params.status
@@ -62,10 +68,11 @@ export const taskService = {
     return serialize(task);
   },
 
-  async list({ list, ownerId }: { list: TaskList; ownerId: string }) {
+  async list({ list, ownerId, status }: TaskListParams) {
+    const dbStatus: TaskStatus | undefined = status ? statusApiToDb[status] : undefined;
     const rows = list === "shared"
-      ? await taskRepository.findShared()
-      : await taskRepository.findPrivate({ ownerId });
+      ? await taskRepository.findShared({ status: dbStatus })
+      : await taskRepository.findPrivate({ ownerId, status: dbStatus });
 
     return rows.map(serialize);
   },

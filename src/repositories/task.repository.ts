@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, TaskStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -40,16 +40,16 @@ export const taskRepository = {
     });
   },
 
-  async findPrivate({ ownerId }: { ownerId: string }) {
+  async findPrivate({ ownerId, status }: { ownerId: string; status?: TaskStatus }) {
     return prisma.task.findMany({
-      where: { ownerId, isShared: false },
+      where: { ownerId, isShared: false, ...(status ? { status } : {}) },
       select: taskSelect,
     });
   },
 
-  async findShared() {
+  async findShared({ status }: { status?: TaskStatus }) {
     return prisma.task.findMany({
-      where: { isShared: true },
+      where: { isShared: true, ...(status ? { status } : {}) },
       select: taskSelect,
     });
   },
