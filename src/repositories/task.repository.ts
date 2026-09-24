@@ -1,6 +1,5 @@
-import { PrismaClient, TaskStatus } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { TaskStatus } from "@prisma/client";
+import { prisma } from "./prisma";
 
 const taskSelect = {
   id: true,
